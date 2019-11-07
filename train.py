@@ -125,7 +125,7 @@ embeddings_weight = None
 if arg.embedding_path:
     embeddings_dict = load_embedding(arg.embedding_path)
     word_alphabet = np.array(in_vocab["rev"])
-    embeddings_weight = build_embedd_table(word_alphabet, embeddings_dict, embedd_dim=embed_dim, caseless=True)
+    embeddings_weight = build_embedd_table(word_alphabet, embeddings_dict, embedd_dim=arg.embed_dim, caseless=True)
 
 
 with tf.variable_scope('model'):
