@@ -119,7 +119,7 @@ global_step = tf.Variable(0, trainable=False, name='global_step')
 slots = tf.placeholder(tf.int32, [None, None], name='slots')  # slot ids
 slot_weights = tf.placeholder(tf.float32, [None, None], name='slot_weights')  # sequence mask
 intent = tf.placeholder(tf.int32, [None], name='intent')  # intent label
-embeddings_weight = None
+embeddings_weight = []
 
 # load the embeddings if we receive embedding_path parameter.
 if arg.embedding_path:
