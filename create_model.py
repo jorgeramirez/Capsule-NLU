@@ -18,7 +18,7 @@ def build_model(input_data, input_size, sequence_length, slot_size, intent_size,
     embedding = tf.get_variable('embedding', [input_size, embed_dim],
                                 initializer=tf.contrib.layers.xavier_initializer())
 
-    if embeddings_weight:
+    if embeddings_weight != None:
         embedding = tf.get_variable(name="embedding", shape=embeddings_weight.shape,
                                     initializer=tf.constant_initializer(embeddings_weight),
                                     trainable=True)
