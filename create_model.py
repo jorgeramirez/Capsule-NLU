@@ -5,7 +5,7 @@ from capsule_masked import Capsule
 
 
 def build_model(input_data, input_size, sequence_length, slot_size, intent_size, intent_dim, layer_size, embed_dim,
-                num_rnn=1, isTraining=True, iter_slot=2, iter_intent=2, re_routing=True):
+                num_rnn=1, isTraining=True, iter_slot=2, iter_intent=2, re_routing=True, embeddings_weight=None):
     cell_fw_list = tf.contrib.rnn.MultiRNNCell([tf.contrib.rnn.BasicLSTMCell(layer_size) for _ in range(num_rnn)])
     cell_bw_list = tf.contrib.rnn.MultiRNNCell([tf.contrib.rnn.BasicLSTMCell(layer_size) for _ in range(num_rnn)])
 
@@ -17,6 +17,16 @@ def build_model(input_data, input_size, sequence_length, slot_size, intent_size,
 
     embedding = tf.get_variable('embedding', [input_size, embed_dim],
                                 initializer=tf.contrib.layers.xavier_initializer())
+
+    if embeddings_weight:
+        embedding = tf.get_variable(name="embedding", shape=embeddings_weight.shape,
+                                    initializer=tf.constant_initializer(embeddings_weight),
+                                    trainable=True)
+    else:
+        embedding = tf.get_variable('embedding', [input_size, embed_dim],
+                                    initializer=tf.contrib.layers.xavier_initializer())
+    print("embedding shape", embedding.shape)
+
     inputs = tf.nn.embedding_lookup(embedding, input_data)
 
     with tf.variable_scope('slot_capsule'):

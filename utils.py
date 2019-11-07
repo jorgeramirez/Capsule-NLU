@@ -336,3 +336,41 @@ class DataProcessor(object):
             slot_weight.append(weight)
         slot_weight = np.array(slot_weight)
         return in_data, slot_data, slot_weight, length, intents, in_seq, slot_seq, intent_seq
+
+
+def load_embedding(embedding_path):
+    """
+    load word embeddings from file
+    :param embedding:
+    :param embedding_path:
+    :param logger:
+    :return: embedding dict, embedding dimention, caseless
+    """
+    embedd_dict = dict()
+    with open(embedding_path, 'r') as file:
+        for line in file:
+            line = line.strip()
+            if len(line) == 0:
+                continue
+                tokens = line.split()
+                if embedd_dim < 0:
+                    embedd_dim = len(tokens) - 1  # BECAUSE THE ZEROTH INDEX IS OCCUPIED BY THE WORD
+                else:
+                    assert (embedd_dim + 1 == len(tokens))
+                embedd = np.empty([1, embedd_dim], dtype=np.float64)
+                embedd[:] = tokens[1:]
+                embedd_dict[tokens[0]] = embedd
+        return embedd_dict
+
+
+def build_embedd_table(word_alphabet, embedd_dict, embedd_dim=64, caseless=True):
+    scale = np.sqrt(3.0 / embedd_dim)
+    # TODO:should we build an embedding table with words in our training/dev/test plus glove .
+    # the extra words in glove will not be trained but can help with UNK
+    embedd_table = np.empty([word_alphabet.size, embedd_dim], dtype=np.float32)
+    embedd_table[:] = np.random.uniform(-scale, scale, [1, embedd_dim])
+    for index, word in np.ndenumerate(word_alphabet):
+        ww = word.lower() if caseless else word
+        embedd = embedd_dict[ww] if ww in embedd_dict else np.random.uniform(-scale, scale, [1, embedd_dim])
+        embedd_table[index, :] = embedd
+    return embedd_table

@@ -12,6 +12,8 @@ from utils import computeF1Score
 from utils import createVocabulary
 from utils import loadVocabulary
 from utils import margin_loss
+from utils import load_embedding
+from utils import build_embedd_table
 
 # Processing Units logs
 log_device_placement = False
@@ -28,6 +30,7 @@ parser.add_argument("--model_type", type=str, default='full', help="""full(defau
 parser.add_argument("--num_rnn", type=int, default=1, help="Num of layers for stacked RNNs.")
 parser.add_argument("--iter_slot", type=int, default=2, help="Num of iteration for slots.")
 parser.add_argument("--iter_intent", type=int, default=2, help="Num of iteration for intents.")
+parser.add_argument("--embedding_path", type=str, default='', help="embedding array's path.")
 
 # Training Environment
 parser.add_argument("--optimizer", type=str, default='rmsprop', help="Optimizer.")
@@ -116,13 +119,21 @@ global_step = tf.Variable(0, trainable=False, name='global_step')
 slots = tf.placeholder(tf.int32, [None, None], name='slots')  # slot ids
 slot_weights = tf.placeholder(tf.float32, [None, None], name='slot_weights')  # sequence mask
 intent = tf.placeholder(tf.int32, [None], name='intent')  # intent label
+embeddings_weight = None
+
+# load the embeddings if we receive embedding_path parameter.
+if arg.embedding_path:
+    embeddings_dict = load_embedding(arg.embedding_path)
+    word_alphabet = np.array(in_vocab["rev"])
+    embeddings_weight = build_embedd_table(word_alphabet, embeddings_dict, embedd_dim=embed_dim, caseless=True)
+
 
 with tf.variable_scope('model'):
     training_outputs = build_model(input_data, len(in_vocab['vocab']), sequence_length, len(slot_vocab['vocab']) - 2,
                                    len(intent_vocab['vocab']), intent_dim,
                                    layer_size=arg.layer_size, embed_dim=arg.embed_dim, num_rnn=arg.num_rnn,
                                    isTraining=True, iter_slot=arg.iter_slot, iter_intent=arg.iter_intent,
-                                   re_routing=re_routing)
+                                   re_routing=re_routing, embeddings_weight=embeddings_weight)
 
 slots_shape = tf.shape(slots)
 slots_reshape = tf.reshape(slots, [-1])
@@ -182,7 +193,7 @@ with tf.variable_scope('model', reuse=True):
                                     len(intent_vocab['vocab']), intent_dim,
                                     layer_size=arg.layer_size, embed_dim=arg.embed_dim, num_rnn=arg.num_rnn,
                                     isTraining=False, iter_slot=arg.iter_slot, iter_intent=arg.iter_intent,
-                                    re_routing=re_routing)
+                                    re_routing=re_routing, embeddings_weight=embeddings_weight)
 
 inference_intent_outputs_norm = tf.norm(inference_outputs[1], axis=-1)
 inference_outputs = [inference_outputs[0], inference_outputs[1], inference_intent_outputs_norm, inference_outputs[2],
