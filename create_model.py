@@ -15,9 +15,6 @@ def build_model(input_data, input_size, sequence_length, slot_size, intent_size,
         cell_bw_list = tf.contrib.rnn.DropoutWrapper(cell_bw_list, input_keep_prob=0.8,
                                                      output_keep_prob=0.8)
 
-    embedding = tf.get_variable('embedding', [input_size, embed_dim],
-                                initializer=tf.contrib.layers.xavier_initializer())
-
     if len(embeddings_weight) > 0:
         embedding = tf.get_variable(name="embedding", shape=embeddings_weight.shape,
                                     initializer=tf.constant_initializer(embeddings_weight),
