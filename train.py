@@ -251,7 +251,6 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
             eval_intent_loss = 0.0
             save_path = os.path.join(arg.model_path, '_step_' + str(step) + '_epochs_' + str(epochs) + '.ckpt')
 
-
             def valid(in_path, slot_path, intent_path):
                 data_processor_valid = DataProcessor(in_path, slot_path, intent_path, in_vocab, slot_vocab,
                                                      intent_vocab)
@@ -290,8 +289,8 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
                         break
                 pred_intents = np.array(pred_intents)
                 correct_intents = np.array(correct_intents)
-                from sklearn.metrics import classification_report
-                logging.info(classification_report(y_true=correct_intents, y_pred=pred_intents, digits=4))
+                #from sklearn.metrics import classification_report
+                # logging.info(classification_report(y_true=correct_intents, y_pred=pred_intents, digits=4))
                 accuracy = (pred_intents == correct_intents)
                 semantic_error = accuracy
                 accuracy = accuracy.astype(float)
@@ -317,7 +316,6 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
                 logging.info('semantic error(intent, slots are all correct): ' + str(semantic_error))
 
                 return f1, accuracy, semantic_error, pred_intents, correct_intents, slot_outputs, correct_slots, input_words
-
 
             logging.info('Valid:')
             epoch_valid_slot, epoch_valid_intent, epoch_valid_err, valid_pred_intent, valid_correct_intent, valid_pred_slot, valid_correct_slot, valid_words = valid(
