@@ -116,7 +116,7 @@ intent_dim = arg.intent_dim
 
 # Create training model
 input_data = tf.placeholder(tf.int32, [None, None], name='inputs')  # word ids
-input_sequence_embeddings = tf.placeholder(tf.float32, [None, None, 768], name='input_sequence_embeddings')
+input_sequence_embeddings = tf.placeholder(tf.float32, [None, None, arg.embed_dim], name='input_sequence_embeddings')
 sequence_length = tf.placeholder(tf.int32, [None], name="sequence_length")  # sequence length
 global_step = tf.Variable(0, trainable=False, name='global_step')
 slots = tf.placeholder(tf.int32, [None, None], name='slots')  # slot ids
@@ -255,7 +255,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
                                            intent_vocab, shuffle=True, use_bert=arg.use_bert)
         in_data, slot_data, slot_weight, length, intents, in_seq, slot_seq, intent_seq = data_processor.get_batch(
             arg.batch_size)
-        input_seq_embeddings = np.empty(shape=[0, 0, 768])
+        input_seq_embeddings = np.empty(shape=[0, 0, arg.embed_dim])
 
         if arg.use_bert:
             input_seq_embeddings = bc.encode([s.split() for s in in_seq], is_tokenized=True)
@@ -305,7 +305,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
 
                     if len(in_data) <= 0:
                         break
-                    input_seq_embeddings = np.empty(shape=[0, 0, 768])
+                    input_seq_embeddings = np.empty(shape=[0, 0, arg.embed_dim])
 
                     if arg.use_bert:
                         input_seq_embeddings = bc.encode([s.split() for s in in_seq], is_tokenized=True)
