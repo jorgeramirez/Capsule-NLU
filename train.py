@@ -260,6 +260,9 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
         if arg.use_bert:
             input_seq_embeddings = bc.encode([s.split() for s in in_seq], is_tokenized=True)
 
+        print("train length", length)
+        print("train input_seq_embeddings", input_seq_embeddings.shape)
+
         feed_dict = {input_data.name: in_data, slots.name: slot_data, slot_weights.name: slot_weight,
                      sequence_length.name: length, intent.name: intents,
                      input_sequence_embeddings.name: input_seq_embeddings}
@@ -303,6 +306,9 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
 
                     if arg.use_bert:
                         input_seq_embeddings = bc.encode([s.split() for s in in_seq], is_tokenized=True)
+
+                    print("valid length", length)
+                    print("valid input_seq_embeddings", input_seq_embeddings.shape)
 
                     feed_dict = {input_data.name: in_data, sequence_length.name: length,
                                  input_sequence_embeddings.name: input_seq_embeddings}
