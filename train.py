@@ -210,7 +210,7 @@ saver = tf.train.Saver()
 
 def save_current_results(epoch, records):
     logging.info("Saving results of Epoch {}".format(str(epoch)))
-    columns = ["split", "step", "loss", "epochs", "slot_f1", "intent_accuracy", "semantic_accuracy"]
+    columns = ["split", "step", "epochs", "loss", "slot_f1", "intent_accuracy", "semantic_accuracy"]
     df = pd.DataFrame(records, columns=columns)
     df.to_csv("./training_output.csv", index=False)
     logging.info("Results saved!")
