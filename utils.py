@@ -301,7 +301,7 @@ class DataProcessor(object):
             # except IndexError:
             #     self.end = 1
             #     break
-            inp = self.__fd_in.readline()
+            inp = self.__fd_in.pop()
             if inp == '':
                 self.end = 1
                 break
