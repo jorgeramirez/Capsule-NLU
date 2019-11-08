@@ -218,6 +218,7 @@ def save_current_results(epoch, records):
 
 # Start Training
 with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_placement=log_device_placement)) as sess:
+    file_writer = tf.summary.FileWriter('./model', sess.graph)
     sess.run(tf.global_variables_initializer())
     logging.info('Training Start')
     epochs = 0
@@ -288,7 +289,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
 
             def valid(in_path, slot_path, intent_path):
                 data_processor_valid = DataProcessor(in_path, slot_path, intent_path, in_vocab, slot_vocab,
-                                                     intent_vocab, use_bert=arg.use_bert)
+                                                     intent_vocab)
                 pred_intents = []
                 correct_intents = []
                 slot_outputs = []
@@ -297,7 +298,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
 
                 while True:
                     in_data, slot_data, slot_weight, length, intents, in_seq, slot_seq, intent_seq = data_processor_valid.get_batch(
-                        arg.batch_size)
+                        arg.batch_size,)
                     input_seq_embeddings = np.empty(shape=[0, 0, 768])
 
                     if arg.use_bert:
