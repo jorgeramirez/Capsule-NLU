@@ -16,7 +16,7 @@ def build_model(input_data, input_size, sequence_length, slot_size, intent_size,
         cell_bw_list = tf.contrib.rnn.DropoutWrapper(cell_bw_list, input_keep_prob=0.8,
                                                      output_keep_prob=0.8)
 
-    if arg.use_bert:
+    if use_bert:
         # we already have the embeddings in this case
         inputs = input_data
     else:
