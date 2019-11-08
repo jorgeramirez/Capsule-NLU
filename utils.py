@@ -296,13 +296,9 @@ class DataProcessor(object):
         slot_seq = []
         intent_seq = []
         for i in range(batch_size):
-            # try:
-            #     inp = self.__fd_in.pop()
-            # except IndexError:
-            #     self.end = 1
-            #     break
-            inp = self.__fd_in.pop()
-            if inp == '':
+            try:
+                inp = self.__fd_in.pop()
+            except IndexError:
                 self.end = 1
                 break
 
