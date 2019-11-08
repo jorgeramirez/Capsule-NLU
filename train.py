@@ -254,7 +254,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
                                            intent_vocab, shuffle=True, use_bert=arg.use_bert)
         in_data, slot_data, slot_weight, length, intents, in_seq, slot_seq, intent_seq = data_processor.get_batch(
             arg.batch_size)
-        input_seq_embeddings = []
+        input_seq_embeddings = np.empty(shape=[0, 0, 768])
 
         if arg.use_bert:
             input_seq_embeddings = bc.encode([s.split() for s in in_seq], is_tokenized=True)
@@ -298,7 +298,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
                 while True:
                     in_data, slot_data, slot_weight, length, intents, in_seq, slot_seq, intent_seq = data_processor_valid.get_batch(
                         arg.batch_size)
-                    input_seq_embeddings = []
+                    input_seq_embeddings = np.empty(shape=[0, 0, 768])
 
                     if arg.use_bert:
                         input_seq_embeddings = bc.encode([s.split() for s in in_seq], is_tokenized=True)
