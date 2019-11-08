@@ -343,8 +343,8 @@ class DataProcessor(object):
         slot_data = np.array(slot_data)
 
         for s in slot_data:
-            #weight = np.not_equal(s, np.full(s.shape, self._DataProcessor__slot_vocab['vocab']['_PAD']))
-            weight = np.not_equal(s, np.zeros(s.shape))
+            weight = np.not_equal(s, np.full(s.shape, self._DataProcessor__slot_vocab['vocab']['_PAD']))
+            #weight = np.not_equal(s, np.zeros(s.shape))
             weight = weight.astype(np.float32)
             slot_weight.append(weight)
         slot_weight = np.array(slot_weight)
