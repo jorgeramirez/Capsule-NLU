@@ -194,7 +194,7 @@ inputs = [input_data, sequence_length, slots, slot_weights, intent]
 # Create Inference Model
 with tf.variable_scope('model', reuse=True):
     input_raw = input_sequence_embeddings if arg.use_bert else input_data
-    inference_outputs = build_model(input_data, len(in_vocab['vocab']), sequence_length, len(slot_vocab['vocab']) - 2,
+    inference_outputs = build_model(input_raw, len(in_vocab['vocab']), sequence_length, len(slot_vocab['vocab']) - 2,
                                     len(intent_vocab['vocab']), intent_dim,
                                     layer_size=arg.layer_size, embed_dim=arg.embed_dim, num_rnn=arg.num_rnn,
                                     isTraining=False, iter_slot=arg.iter_slot, iter_intent=arg.iter_intent,

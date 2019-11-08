@@ -19,7 +19,6 @@ def build_model(input_data, input_size, sequence_length, slot_size, intent_size,
     if use_bert:
         # we already have the embeddings in this case
         inputs = input_data
-        print("use bert true", inputs.shape)
     else:
         if len(embeddings_weight) > 0:
             embedding = tf.get_variable(name="embedding", shape=embeddings_weight.shape,
