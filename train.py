@@ -310,7 +310,6 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
                     print("valid length", length)
                     print("valid input_seq_embeddings", input_seq_embeddings.shape)
                     print("valid in_seq", in_seq)
-                    print("valid input_seq_embeddings[0]", input_seq_embeddings[:])
 
                     feed_dict = {input_data.name: in_data, sequence_length.name: length,
                                  input_sequence_embeddings.name: input_seq_embeddings}

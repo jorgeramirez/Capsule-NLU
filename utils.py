@@ -296,11 +296,16 @@ class DataProcessor(object):
         slot_seq = []
         intent_seq = []
         for i in range(batch_size):
-            try:
-                inp = self.__fd_in.pop()
-            except IndexError:
+            # try:
+            #     inp = self.__fd_in.pop()
+            # except IndexError:
+            #     self.end = 1
+            #     break
+            inp = self.__fd_in.readline()
+            if inp == '':
                 self.end = 1
                 break
+
             slot = self.__fd_slot.pop()
             intent = self.__fd_intent.pop()
             inp = inp.rstrip()
@@ -320,11 +325,12 @@ class DataProcessor(object):
             inp = sentenceToIds(inp, self.__in_vocab, unk=True)
             slot = sentenceToIds(slot, self.__slot_vocab, unk=True)
             intent = sentenceToIds(intent, self.__intent_vocab, unk=False)
-            if None not in intent:
-                batch_in.append(np.array(inp))
-                batch_slot.append(np.array(slot))
-                length.append(len(inp))
-                intents.append(intent[0])
+            # if None not in intent:
+            batch_in.append(np.array(inp))
+            batch_slot.append(np.array(slot))
+            length.append(len(inp))
+            intents.append(intent[0])
+
             if len(inp) != len(slot):
                 print(iii, sss)
                 print(inp, slot)
