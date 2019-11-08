@@ -302,6 +302,9 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
                 while True:
                     in_data, slot_data, slot_weight, length, intents, in_seq, slot_seq, intent_seq = data_processor_valid.get_batch(
                         arg.batch_size)
+
+                    if len(in_data) <= 0:
+                        break
                     input_seq_embeddings = np.empty(shape=[0, 0, 768])
 
                     if arg.use_bert:
@@ -313,27 +316,27 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
 
                     feed_dict = {input_data.name: in_data, sequence_length.name: length,
                                  input_sequence_embeddings.name: input_seq_embeddings}
-                    if len(in_data) != 0:
-                        ret = sess.run(inference_outputs, feed_dict)
-                        for i in ret[2]:
-                            pred_intents.append(np.argmax(i))
-                        for i in intents:
-                            correct_intents.append(i)
 
-                        pred_slots = ret[3][-1, :, :, :].reshape((slot_data.shape[0], slot_data.shape[1], -1))
-                        for p, t, i, l, s in zip(pred_slots, slot_data, in_data, length, slot_seq):
-                            p = np.argmax(p, 1)
-                            tmp_pred = []
-                            tmp_correct = []
-                            tmp_input = []
-                            for j in range(l):
-                                tmp_pred.append(slot_vocab['rev'][p[j]])
-                                tmp_correct.append(slot_vocab['rev'][t[j]])
-                                tmp_input.append(in_vocab['rev'][i[j]])
+                    ret = sess.run(inference_outputs, feed_dict)
+                    for i in ret[2]:
+                        pred_intents.append(np.argmax(i))
+                    for i in intents:
+                        correct_intents.append(i)
 
-                            slot_outputs.append(tmp_pred)
-                            correct_slots.append(tmp_correct)
-                            input_words.append(tmp_input)
+                    pred_slots = ret[3][-1, :, :, :].reshape((slot_data.shape[0], slot_data.shape[1], -1))
+                    for p, t, i, l, s in zip(pred_slots, slot_data, in_data, length, slot_seq):
+                        p = np.argmax(p, 1)
+                        tmp_pred = []
+                        tmp_correct = []
+                        tmp_input = []
+                        for j in range(l):
+                            tmp_pred.append(slot_vocab['rev'][p[j]])
+                            tmp_correct.append(slot_vocab['rev'][t[j]])
+                            tmp_input.append(in_vocab['rev'][i[j]])
+
+                        slot_outputs.append(tmp_pred)
+                        correct_slots.append(tmp_correct)
+                        input_words.append(tmp_input)
                     if data_processor_valid.end == 1:
                         break
                 pred_intents = np.array(pred_intents)
