@@ -5,6 +5,7 @@ import os
 
 import numpy as np
 import tensorflow as tf
+import pandas as pd
 
 from create_model import build_model
 from utils import DataProcessor
@@ -55,6 +56,7 @@ parser.add_argument("--valid_data_path", type=str, default='valid', help="Path t
 parser.add_argument("--input_file", type=str, default='seq.in', help="Input file name.")
 parser.add_argument("--slot_file", type=str, default='seq.out', help="Slot file name.")
 parser.add_argument("--intent_file", type=str, default='label', help="Intent file name.")
+parser.add_argument("--use_bert", type=bool, default=False, help="Use BERT embeddings.", dest='use_bert')
 
 arg = parser.parse_args()
 logs_path = './log/' + arg.run_name
@@ -114,6 +116,7 @@ intent_dim = arg.intent_dim
 
 # Create training model
 input_data = tf.placeholder(tf.int32, [None, None], name='inputs')  # word ids
+input_sequence_embeddings = tf.placeholder(tf.float32, [None, None, 768], name='input_sequence_embeddings')
 sequence_length = tf.placeholder(tf.int32, [None], name="sequence_length")  # sequence length
 global_step = tf.Variable(0, trainable=False, name='global_step')
 slots = tf.placeholder(tf.int32, [None, None], name='slots')  # slot ids
@@ -129,11 +132,12 @@ if arg.embedding_path:
 
 
 with tf.variable_scope('model'):
-    training_outputs = build_model(input_data, len(in_vocab['vocab']), sequence_length, len(slot_vocab['vocab']) - 2,
+    input_raw = input_sequence_embeddings if arg.use_bert else input_data
+    training_outputs = build_model(input_raw, len(in_vocab['vocab']), sequence_length, len(slot_vocab['vocab']) - 2,
                                    len(intent_vocab['vocab']), intent_dim,
                                    layer_size=arg.layer_size, embed_dim=arg.embed_dim, num_rnn=arg.num_rnn,
                                    isTraining=True, iter_slot=arg.iter_slot, iter_intent=arg.iter_intent,
-                                   re_routing=re_routing, embeddings_weight=embeddings_weight)
+                                   re_routing=re_routing, embeddings_weight=embeddings_weight, use_bert=arg.use_bert)
 
 slots_shape = tf.shape(slots)
 slots_reshape = tf.reshape(slots, [-1])
@@ -189,11 +193,12 @@ inputs = [input_data, sequence_length, slots, slot_weights, intent]
 
 # Create Inference Model
 with tf.variable_scope('model', reuse=True):
+    input_raw = input_sequence_embeddings if arg.use_bert else input_data
     inference_outputs = build_model(input_data, len(in_vocab['vocab']), sequence_length, len(slot_vocab['vocab']) - 2,
                                     len(intent_vocab['vocab']), intent_dim,
                                     layer_size=arg.layer_size, embed_dim=arg.embed_dim, num_rnn=arg.num_rnn,
                                     isTraining=False, iter_slot=arg.iter_slot, iter_intent=arg.iter_intent,
-                                    re_routing=re_routing, embeddings_weight=embeddings_weight)
+                                    re_routing=re_routing, embeddings_weight=embeddings_weight, use_bert=arg.use_bert)
 
 inference_intent_outputs_norm = tf.norm(inference_outputs[1], axis=-1)
 inference_outputs = [inference_outputs[0], inference_outputs[1], inference_intent_outputs_norm, inference_outputs[2],
@@ -201,6 +206,15 @@ inference_outputs = [inference_outputs[0], inference_outputs[1], inference_inten
 inference_inputs = [input_data, sequence_length]
 
 saver = tf.train.Saver()
+
+
+def save_current_results(epoch, records):
+    logging.info("Saving results of Epoch {}".format(str(epoch)))
+    columns = ["split", "step", "loss", "epochs", "slot_f1", "intent_accuracy", "semantic_accuracy"]
+    df = pd.DataFrame(records, columns=columns)
+    df.to_csv("./training_output.csv", index=False)
+    logging.info("Results saved!")
+
 
 # Start Training
 with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_placement=log_device_placement)) as sess:
@@ -227,17 +241,27 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
     # Load from saved checkpoints
     # saver.restore(sess, './model/' + arg.run_name + ".ckpt")
     # logging.info("Model restored.")
+    result_records = []
+    if arg.use_bert:
+        from bert_serving.client import BertClient
+        bc = BertClient()
 
     while True:
         if data_processor == None:
             data_processor = DataProcessor(os.path.join(full_train_path, arg.input_file),
                                            os.path.join(full_train_path, arg.slot_file),
                                            os.path.join(full_train_path, arg.intent_file), in_vocab, slot_vocab,
-                                           intent_vocab, shuffle=True)
+                                           intent_vocab, shuffle=True, use_bert=arg.use_bert)
         in_data, slot_data, slot_weight, length, intents, in_seq, slot_seq, intent_seq = data_processor.get_batch(
             arg.batch_size)
+        input_seq_embeddings = []
+
+        if arg.use_bert:
+            input_seq_embeddings = bc.encode([s.split() for s in in_seq], is_tokenized=True)
+
         feed_dict = {input_data.name: in_data, slots.name: slot_data, slot_weights.name: slot_weight,
-                     sequence_length.name: length, intent.name: intents}
+                     sequence_length.name: length, intent.name: intents,
+                     input_sequence_embeddings.name: input_seq_embeddings}
 
         if len(in_data) != 0:
             ret = sess.run(training_outputs, feed_dict)
@@ -264,7 +288,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
 
             def valid(in_path, slot_path, intent_path):
                 data_processor_valid = DataProcessor(in_path, slot_path, intent_path, in_vocab, slot_vocab,
-                                                     intent_vocab)
+                                                     intent_vocab, use_bert=arg.use_bert)
                 pred_intents = []
                 correct_intents = []
                 slot_outputs = []
@@ -274,7 +298,13 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
                 while True:
                     in_data, slot_data, slot_weight, length, intents, in_seq, slot_seq, intent_seq = data_processor_valid.get_batch(
                         arg.batch_size)
-                    feed_dict = {input_data.name: in_data, sequence_length.name: length}
+                    input_seq_embeddings = []
+
+                    if arg.use_bert:
+                        input_seq_embeddings = bc.encode([s.split() for s in in_seq], is_tokenized=True)
+
+                    feed_dict = {input_data.name: in_data, sequence_length.name: length,
+                                 input_sequence_embeddings.name: input_seq_embeddings}
                     if len(in_data) != 0:
                         ret = sess.run(inference_outputs, feed_dict)
                         for i in ret[2]:

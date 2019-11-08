@@ -52,6 +52,8 @@ def createVocabulary(input_path, output_path, pad=True, unk=True):
             init_vocab.append('_PAD')
         if unk:
             init_vocab.append('_UNK')
+        init_vocab.append('[CLS]')
+        init_vocab.append('[SEP]')
         vocab = sorted(vocab, key=vocab.get, reverse=True) + init_vocab
 
         for v in vocab:
@@ -253,8 +255,12 @@ def computeF1Score(correct_slots, pred_slots):
     return f1, precision, recall
 
 
+def bert_sentence_wrap(s):
+    return "[CLS] " + s + " [SEP]"
+
+
 class DataProcessor(object):
-    def __init__(self, in_path, slot_path, intent_path, in_vocab, slot_vocab, intent_vocab, shuffle=False):
+    def __init__(self, in_path, slot_path, intent_path, in_vocab, slot_vocab, intent_vocab, shuffle=False, use_bert=False):
         self.__fd_in = open(in_path, 'r').readlines()
         self.__fd_slot = open(slot_path, 'r').readlines()
         self.__fd_intent = open(intent_path, 'r').readlines()
@@ -263,6 +269,7 @@ class DataProcessor(object):
         self.__in_vocab = in_vocab
         self.__slot_vocab = slot_vocab
         self.__intent_vocab = intent_vocab
+        self.__use_bert = use_bert
         self.end = 0
 
     def close(self):
@@ -303,6 +310,10 @@ class DataProcessor(object):
             in_seq.append(inp)
             slot_seq.append(slot)
             intent_seq.append(intent)
+
+            if self.__use_bert:
+                inp = bert_sentence_wrap(inp)
+                slot = bert_sentence_wrap(slot)
 
             iii = inp
             sss = slot
