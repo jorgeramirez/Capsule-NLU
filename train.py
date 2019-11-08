@@ -345,6 +345,9 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=False, log_device_pla
                 accuracy = accuracy.astype(float)
                 accuracy = np.mean(accuracy) * 100.0
 
+                print("correct_slots", correct_slots)
+                print("slot_outputs", slot_outputs)
+
                 index = 0
                 for t, p in zip(correct_slots, slot_outputs):
                     # Process Semantic Error
