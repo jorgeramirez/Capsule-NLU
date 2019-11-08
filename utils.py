@@ -321,7 +321,6 @@ class DataProcessor(object):
             inp = sentenceToIds(inp, self.__in_vocab, unk=True)
             slot = sentenceToIds(slot, self.__slot_vocab, unk=True)
             intent = sentenceToIds(intent, self.__intent_vocab, unk=False)
-            # if None not in intent:
             batch_in.append(np.array(inp))
             batch_slot.append(np.array(slot))
             length.append(len(inp))
